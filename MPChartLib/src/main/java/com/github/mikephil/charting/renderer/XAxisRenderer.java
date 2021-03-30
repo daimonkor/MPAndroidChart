@@ -34,10 +34,18 @@ public class XAxisRenderer extends AxisRenderer {
         mAxisLabelPaint.setTextSize(Utils.convertDpToPixel(10f));
     }
 
+    @Override
     protected void setupGridPaint() {
         mGridPaint.setColor(mXAxis.getGridColor());
         mGridPaint.setStrokeWidth(mXAxis.getGridLineWidth());
         mGridPaint.setPathEffect(mXAxis.getGridDashPathEffect());
+    }
+
+    @Override
+    protected void setupMajorGridPaint() {
+        mMajorGridPaint.setColor(mXAxis.getMajorGridColor());
+        mMajorGridPaint.setStrokeWidth(mXAxis.getMajorGridLineWidth());
+        mMajorGridPaint.setPathEffect(mXAxis.getMajorGridDashPathEffect());
     }
 
     @Override
@@ -231,7 +239,9 @@ public class XAxisRenderer extends AxisRenderer {
         Utils.drawXAxisValue(c, formattedLabel, x, y, mAxisLabelPaint, anchor, angleDegrees);
     }
     protected Path mRenderGridLinesPath = new Path();
+    protected Path mRenderMajorGridLinesPath = new Path();
     protected float[] mRenderGridLinesBuffer = new float[2];
+    protected float[] mRenderMajorGridLinesBuffer = new float[2];
     @Override
     public void renderGridLines(Canvas c) {
 
@@ -266,12 +276,54 @@ public class XAxisRenderer extends AxisRenderer {
         c.restoreToCount(clipRestoreCount);
     }
 
+    @Override
+    public void renderMajorGridLines(Canvas c) {
+        if (!mXAxis.isDrawMajorGridLines() || !mXAxis.isEnabled())
+            return;
+
+        int clipRestoreCount = c.save();
+        c.clipRect(getMajorGridClippingRect());
+
+        if(mRenderMajorGridLinesBuffer.length != mAxis.mMajorEntries.length * 2){
+            mRenderMajorGridLinesBuffer = new float[mXAxis.mMajorEntries.length * 2];
+        }
+        float[] positions = mRenderMajorGridLinesBuffer;
+
+        for (int i = 0; i < positions.length; i += 2) {
+            positions[i] = mXAxis.mMajorEntries[i / 2];
+            positions[i + 1] = mXAxis.mMajorEntries[i / 2];
+        }
+
+
+        mTrans.pointValuesToPixel(positions);
+
+        Path majorGridLinesPath = mRenderMajorGridLinesPath;
+        majorGridLinesPath.reset();
+
+        setupMajorGridPaint();
+
+        for (int i = 0; i < positions.length; i += 2) {
+
+            drawMajorGridLine(c, positions[i], positions[i + 1], majorGridLinesPath);
+        }
+
+        c.restoreToCount(clipRestoreCount);
+    }
+
     protected RectF mGridClippingRect = new RectF();
+
+    protected RectF mMajorGridClippingRect = new RectF();
 
     public RectF getGridClippingRect() {
         mGridClippingRect.set(mViewPortHandler.getContentRect());
         mGridClippingRect.inset(-mAxis.getGridLineWidth(), 0.f);
         return mGridClippingRect;
+    }
+
+    public RectF getMajorGridClippingRect() {
+        mMajorGridClippingRect.set(mViewPortHandler.getContentRect());
+        mMajorGridClippingRect.inset(-mAxis.getMajorGridLineWidth(), 0.f);
+        return mMajorGridClippingRect;
     }
 
     /**
@@ -292,6 +344,18 @@ public class XAxisRenderer extends AxisRenderer {
 
         gridLinePath.reset();
     }
+
+    protected void drawMajorGridLine(Canvas c, float x, float y, Path majorGridLinePath) {
+
+        majorGridLinePath.moveTo(x, mViewPortHandler.contentBottom());
+        majorGridLinePath.lineTo(x, mViewPortHandler.contentTop());
+
+        // draw a path because lines don't support dashing on lower android versions
+        c.drawPath(majorGridLinePath, mMajorGridPaint);
+
+        majorGridLinePath.reset();
+    }
+
 
     protected float[] mRenderLimitLinesBuffer = new float[2];
     protected RectF mLimitLineClippingRect = new RectF();

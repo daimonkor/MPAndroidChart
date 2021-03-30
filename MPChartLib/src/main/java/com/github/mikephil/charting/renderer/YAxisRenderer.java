@@ -106,6 +106,20 @@ public class YAxisRenderer extends AxisRenderer {
         }
     }
 
+    @Override
+    protected void setupGridPaint() {
+        mGridPaint.setColor(mYAxis.getGridColor());
+        mGridPaint.setStrokeWidth(mYAxis.getGridLineWidth());
+        mGridPaint.setPathEffect(mYAxis.getGridDashPathEffect());
+    }
+
+    @Override
+    protected void setupMajorGridPaint() {
+        mMajorGridPaint.setColor(mYAxis.getMajorGridColor());
+        mMajorGridPaint.setStrokeWidth(mYAxis.getMajorGridLineWidth());
+        mMajorGridPaint.setPathEffect(mYAxis.getMajorGridDashPathEffect());
+    }
+
     /**
      * draws the y-labels on the specified x-position
      *
@@ -147,9 +161,7 @@ public class YAxisRenderer extends AxisRenderer {
 
             float[] positions = getTransformedPositions();
 
-            mGridPaint.setColor(mYAxis.getGridColor());
-            mGridPaint.setStrokeWidth(mYAxis.getGridLineWidth());
-            mGridPaint.setPathEffect(mYAxis.getGridDashPathEffect());
+            setupGridPaint();
 
             Path gridLinePath = mRenderGridLinesPath;
             gridLinePath.reset();
@@ -170,12 +182,61 @@ public class YAxisRenderer extends AxisRenderer {
         }
     }
 
+    protected Path mRenderMajorGridLinesPath = new Path();
+
+    @Override
+    public void renderMajorGridLines(Canvas c) {
+        if (!mYAxis.isEnabled())
+            return;
+
+        if (mYAxis.isDrawMajorGridLines()) {
+
+            int clipRestoreCount = c.save();
+            c.clipRect(getMajorGridClippingRect());
+
+            if(mGetMajorTransformedPositionsBuffer.length != mYAxis.mMajorEntries.length * 2){
+                mGetMajorTransformedPositionsBuffer = new float[mYAxis.mMajorEntries.length * 2];
+            }
+            float[] positions = mGetMajorTransformedPositionsBuffer;
+
+            for (int i = 0; i < positions.length; i += 2) {
+                // only fill y values, x values are not needed for y-labels
+                positions[i + 1] = mYAxis.mMajorEntries[i / 2];
+            }
+
+            mTrans.pointValuesToPixel(positions);
+
+            setupMajorGridPaint();
+
+            Path majorGridLinesPath = mRenderMajorGridLinesPath;
+            majorGridLinesPath.reset();
+
+            // draw the grid
+            for (int i = 0; i < positions.length; i += 2) {
+
+                // draw a path because lines don't support dashing on lower android versions
+                c.drawPath(linePath(majorGridLinesPath, i, positions), getMajorGridPaint());
+                majorGridLinesPath.reset();
+            }
+
+            c.restoreToCount(clipRestoreCount);
+        }
+    }
+
     protected RectF mGridClippingRect = new RectF();
 
     public RectF getGridClippingRect() {
         mGridClippingRect.set(mViewPortHandler.getContentRect());
         mGridClippingRect.inset(0.f, -mAxis.getGridLineWidth());
         return mGridClippingRect;
+    }
+
+    protected RectF mMajorGridClippingRect = new RectF();
+
+    public RectF getMajorGridClippingRect() {
+        mMajorGridClippingRect.set(mViewPortHandler.getContentRect());
+        mMajorGridClippingRect.inset(0.f, -mAxis.getGridLineWidth());
+        return mMajorGridClippingRect;
     }
 
     /**
@@ -195,6 +256,7 @@ public class YAxisRenderer extends AxisRenderer {
     }
 
     protected float[] mGetTransformedPositionsBuffer = new float[2];
+    protected float[] mGetMajorTransformedPositionsBuffer = new float[2];
     /**
      * Transforms the values contained in the axis entries to screen pixels and returns them in form of a float array
      * of x- and y-coordinates.

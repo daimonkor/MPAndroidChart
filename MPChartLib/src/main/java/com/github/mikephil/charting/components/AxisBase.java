@@ -26,6 +26,10 @@ public abstract class AxisBase extends ComponentBase {
 
     private int mGridColor = Color.GRAY;
 
+    protected int mMajorGridColor = Color.GRAY;
+
+    protected float mMajorGridLineWidth = 1f;
+
     private float mGridLineWidth = 1f;
 
     private int mAxisLineColor = Color.GRAY;
@@ -36,6 +40,8 @@ public abstract class AxisBase extends ComponentBase {
      * the actual array of entries
      */
     public float[] mEntries = new float[]{};
+
+    public float[] mMajorEntries = new float[]{};
 
     /**
      * axis label entries only used for centered labels
@@ -62,6 +68,10 @@ public abstract class AxisBase extends ComponentBase {
      */
     protected float mGranularity = 1.0f;
 
+    protected float mMajorGranularity = 1.0f;
+
+    protected boolean mMajorGranularityEnabled = false;
+
     /**
      * When true, axis labels are controlled by the `granularity` property.
      * When false, axis values could possibly be repeated.
@@ -79,6 +89,8 @@ public abstract class AxisBase extends ComponentBase {
      * flag indicating if the grid lines for this axis should be drawn
      */
     protected boolean mDrawGridLines = true;
+
+    protected boolean mDrawMajorGridLines = false;
 
     /**
      * flag that indicates if the line alongside the axis is drawn or not
@@ -101,6 +113,8 @@ public abstract class AxisBase extends ComponentBase {
      * the path effect of the grid lines that makes dashed lines possible
      */
     private DashPathEffect mGridDashPathEffect = null;
+
+    private DashPathEffect mMajorGridDashPathEffect = null;
 
     /**
      * array of limit lines that can be set for the axis
@@ -605,6 +619,31 @@ public abstract class AxisBase extends ComponentBase {
         return mGridDashPathEffect;
     }
 
+    public void enableMajorGridDashedLine(float lineLength, float spaceLength, float phase) {
+        mMajorGridDashPathEffect = new DashPathEffect(new float[]{
+                lineLength, spaceLength
+        }, phase);
+    }
+
+    public void setMajorGridDashedLine(DashPathEffect effect) {
+        mMajorGridDashPathEffect = effect;
+    }
+
+
+    public void disableMajorGridDashedLine() {
+        mMajorGridDashPathEffect = null;
+    }
+
+
+    public boolean isMajorGridDashedLineEnabled() {
+        return mMajorGridDashPathEffect == null ? false : true;
+    }
+
+
+    public DashPathEffect getMajorGridDashPathEffect() {
+        return mMajorGridDashPathEffect;
+    }
+
 
     /**
      * Enables the axis line to be drawn in dashed mode, e.g. like this
@@ -812,5 +851,45 @@ public abstract class AxisBase extends ComponentBase {
     public void setSpaceMax(float mSpaceMax)
     {
         this.mSpaceMax = mSpaceMax;
+    }
+
+    public float getMajorGranularity() {
+        return mMajorGranularity;
+    }
+
+    public void setMajorGranularity(float majorGranularity) {
+        this.mMajorGranularity = majorGranularity;
+    }
+
+    public boolean isMajorGranularityEnabled() {
+        return mMajorGranularityEnabled;
+    }
+
+    public void setMajorGranularityEnabled(boolean majorGranularityEnabled) {
+        this.mMajorGranularityEnabled = majorGranularityEnabled;
+    }
+
+    public int getMajorGridColor() {
+        return mMajorGridColor;
+    }
+
+    public void setMajorGridColor(int majorGridColor) {
+        this.mMajorGridColor = majorGridColor;
+    }
+
+    public float getMajorGridLineWidth() {
+        return mMajorGridLineWidth;
+    }
+
+    public void setMajorGridLineWidth(float majorGridLineWidth) {
+        this.mMajorGridLineWidth = majorGridLineWidth;
+    }
+
+    public boolean isDrawMajorGridLines() {
+        return mDrawMajorGridLines;
+    }
+
+    public void setDrawMajorGridLines(boolean drawMajorGridLines) {
+        this.mDrawMajorGridLines = drawMajorGridLines;
     }
 }
